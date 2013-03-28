@@ -22,6 +22,7 @@
         </activity>
         <activity
             android:name="com.mobileindustrycast.ChatRoom"
+            android:screenOrientation="landscape"
             android:label="@string/title_activity_chat_room" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

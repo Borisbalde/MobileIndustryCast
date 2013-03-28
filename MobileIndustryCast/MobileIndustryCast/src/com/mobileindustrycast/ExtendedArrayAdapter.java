@@ -175,49 +175,65 @@ public class ExtendedArrayAdapter extends ArrayAdapter<CustomListMessage> {
 	               else {
 	                  String prefixString = prefix.toString().toLowerCase();
 	  
-	                  final ArrayList<CustomListMessage> values = mOriginalValues;
-	                  final int count = values.size();
+	                  String[] searchWords = prefixString.split(" ");
+	                  boolean match= false;
+	                  int check = 0;
+	                  
+	                  ArrayList<CustomListMessage> values = mOriginalValues;
+	                  int count = values.size();
 	  
-	                  final ArrayList<CustomListMessage> newValues = new ArrayList<CustomListMessage>(count);
+	                  ArrayList<CustomListMessage> newValues = new ArrayList<CustomListMessage>(count);
 	  
+
 	                  for (int i = 0; i < count; i++) {
 	                      final CustomListMessage value = values.get(i);
 	                      final String valueText = value.messageToString().toLowerCase();
 	  
 
-	                      switch (value.getStatusEnum())
-	                      {case 1:
-	                    	  if(buyerSelected)
-	                    		  {if (valueText.contains(prefixString)) {
-	    	                          newValues.add(value);
-	    	                      } }
-	                    	  break;
-	                      case 2:
-	                    	  if(sellerSelected )
-	                    		  {if (valueText.contains(prefixString)) {
-	    	                          newValues.add(value);
-	    	                      } }
-	                    	  break;
-	                      case 3:
-	                    	  if(tradeSelected)
-	                    		  {if (valueText.contains(prefixString)) {
-	    	                          newValues.add(value);
-	    	                      } }
-	                    	  break;
-	                      case 4:
-	                    	  if(infoSelected)
-	                    		  {if (valueText.contains(prefixString)) {
-	    	                          newValues.add(value);
-	    	                      } }
-	                    	  break;
-	                      
+	                      for (int y = 0; y < searchWords.length; y++) {
+	                    	  if (valueText.contains(searchWords[y])){
+	                    		  check++;
+	                    	  }
 	                      }
-	                     
-	                  }
+	                      
+	                      if (check == searchWords.length)
+	                      {
+	                    	  switch (value.getStatusEnum())
+	                    	  {case 1:
+	                    		  if(buyerSelected)
+	                    		  	{
+	                    		  		newValues.add(value);
+	                    		  }
+	                    		  break;
+	                    	  case 2:
+	                    		  if(sellerSelected )
+	                    		  {
+	                    			  newValues.add(value);
+	                    		  	} 
+	                    		  break;
+	                    	  case 3:
+	                    		  if(tradeSelected)
+	                    		  	{
+	                    		  		newValues.add(value);
+	                    		  	} 
+	                    		  break;
+	                    	  case 4:
+	                    		  if(infoSelected)
+	                    		  	{
+	                    		  		newValues.add(value);
+	                    		  	} 
+	                    		  break;
+	                    	  }  
+
+	                      }
+                    	  check = 0;
+	                      }
+
 	  
 	                  results.values = newValues;
 	                  results.count = newValues.size();
 	              }
+	                  
 	              
 	              return results;
 	          }
