@@ -29,7 +29,7 @@
     <string name="Buy">Buy</string>
     <string name="Sell">Sell</string>
     <string name="Trade">Trade</string>
-    <string name="dialog_broadcast">Do you want to buy, sell or trade?</string>
+    <string name="dialog_broadcast">Is it a trade, sell or buy offer?</string>
     <string name="Broadcast">Broadcast</string>
     <string name="NEW_MESSAGE">NEW MESSAGE</string>
     <string name="item_photo">Photo of offered item</string>

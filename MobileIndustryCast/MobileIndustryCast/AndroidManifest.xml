@@ -3,6 +3,7 @@
     package="com.mobileindustrycast"
     android:versionCode="1"
     android:versionName="1.0" >
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"></uses-permission>
     <uses-permission android:name="android.permission.INTERNET"/>
     
 
@@ -16,7 +17,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.mobileindustrycast.login"
+            android:name="com.mobileindustrycast.loginActivity"
             android:label="@string/app_name"
             android:windowSoftInputMode="adjustResize|stateVisible" >
         </activity>
@@ -30,6 +31,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="com.mobileindustrycast.FileBrowserActivity"></activity>
+        <activity android:name="com.mobileindustrycast.ListFileActivity"></activity>
     </application>
 
 </manifest>

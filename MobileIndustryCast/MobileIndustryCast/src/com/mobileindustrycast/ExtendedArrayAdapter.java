@@ -130,53 +130,10 @@ public class ExtendedArrayAdapter extends ArrayAdapter<CustomListMessage> {
 	                      results.count = list.size();
 	                  //}
 	              }
-	                  else if(!buyerSelected || !sellerSelected || !tradeSelected || !infoSelected && (prefix == null || prefix.length() == 0))
-	                  {
-
-	                	  
-		                  final ArrayList<CustomListMessage> values = mOriginalValues;
-		                  final int count = values.size();
-		  
-		                  final ArrayList<CustomListMessage> newValues = new ArrayList<CustomListMessage>(count);
-		  
-		                  for (int i = 0; i < count; i++) {
-		                      final CustomListMessage value = values.get(i);
-
-		                      
-		                      switch (value.getStatusEnum())
-		                      {case 1:
-		                    	  if(buyerSelected) {
-		    	                          newValues.add(value);
-		    	                      }
-		                    	  break;
-		                      case 2:
-		                    	  if(sellerSelected){
-		    	                          newValues.add(value);
-		    	                      }
-		                    	  break;
-		                      case 3:
-		                    	  if(tradeSelected){
-		    	                          newValues.add(value);
-		    	                      }
-		                    	  break;
-		                      case 4:
-		                    	  if(infoSelected){
-		    	                          newValues.add(value);
-		    	                       }
-		                    	  break;
-		                      
-		                      }
-		                     
-		                  }
-		  
-		                  results.values = newValues;
-		                  results.count = newValues.size();
-	                  }
-	               else {
+	                  else {
 	                  String prefixString = prefix.toString().toLowerCase();
 	  
 	                  String[] searchWords = prefixString.split(" ");
-	                  boolean match= false;
 	                  int check = 0;
 	                  
 	                  ArrayList<CustomListMessage> values = mOriginalValues;

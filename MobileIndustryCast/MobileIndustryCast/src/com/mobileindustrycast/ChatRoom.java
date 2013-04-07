@@ -1,8 +1,18 @@
 
 package com.mobileindustrycast;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
@@ -17,15 +27,21 @@ import com.mobileindustrycast.XMPP_setting;
 import android.text.TextWatcher;
 import android.app.Activity;
 import android.app.DialogFragment;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 import android.view.View.OnClickListener;
 
@@ -36,8 +52,8 @@ public class ChatRoom extends Activity implements BroadcastDialog.NoticeDialogLi
 	MultiUserChat muc; 
 	Message message;
 	ArrayList<CustomListMessage> msg = new ArrayList<CustomListMessage>();
-	String USERNAME="Boris_the_Great";
-	String userLocation = "Soviet Russia";
+	String USERNAME="Boris";
+	String userLocation = "BC";
 	String userStatus = "Buyer";
 
 	String filter ="";
@@ -46,6 +62,13 @@ public class ChatRoom extends Activity implements BroadcastDialog.NoticeDialogLi
 	ListView mlist;
 	
 	BroadcastDialog dialog = new BroadcastDialog();
+	
+	private final int REQUEST_CODE_PICK_DIR = 1;
+	private final int REQUEST_CODE_PICK_FILE = 2;
+	InputStream inputStream;
+	
+	final String php_URL = "http://localhost/test/test.php";
+  String yourPictureLink = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz";//to due to the final type specifics name is such that is hard to reproduce 
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,13 +85,15 @@ public class ChatRoom extends Activity implements BroadcastDialog.NoticeDialogLi
 		
         Button post_button = (Button) findViewById(R.id.post_btn);
         Button broadcast_button = (Button) findViewById(R.id.broadcast_btn);
+        Button attach_button = (Button) findViewById(R.id.button1);
         
         final ToggleButton buyer = (ToggleButton) findViewById(R.id.toggle_buyer);
         final ToggleButton seller = (ToggleButton) findViewById(R.id.toggle_seller);
         final ToggleButton trade = (ToggleButton) findViewById(R.id.toggle_trade);
         final ToggleButton info = (ToggleButton) findViewById(R.id.toggle_info);
 
-        
+        final Activity activityForButton = this;
+
         buyer.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
@@ -188,6 +213,24 @@ public class ChatRoom extends Activity implements BroadcastDialog.NoticeDialogLi
 			}
 		});
 
+		attach_button.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+
+				Intent fileExploreIntent = new Intent(
+						com.mobileindustrycast.FileBrowserActivity.INTENT_ACTION_SELECT_FILE,
+        				null,
+        				activityForButton,
+        				com.mobileindustrycast.FileBrowserActivity.class
+        				);
+    			fileExploreIntent.putExtra(
+    					com.mobileindustrycast.FileBrowserActivity.startDirectoryParameter, 
+    					"/mnt/sdcard/DCIM/Camera");
+        		startActivityForResult(
+        				fileExploreIntent,
+        				REQUEST_CODE_PICK_FILE
+        				);       		    				
+			}
+		});
 	
     //base for filtering using search
         EditText searchWords = (EditText) findViewById(R.id.search_text);
@@ -311,7 +354,103 @@ public class ChatRoom extends Activity implements BroadcastDialog.NoticeDialogLi
     	xmpp.disconnect();
     }
     
+    @Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    	ImageView image = (ImageView) findViewById(R.id.imageView1);
+	    		
+		if (requestCode == REQUEST_CODE_PICK_FILE) {
+        	if(resultCode == RESULT_OK) {
+        		String newFile = data.getStringExtra(
+        				com.mobileindustrycast.FileBrowserActivity.returnFileParameter);
+        		if(newFile.contains(".png")||newFile.contains(".jpg")||
+        				newFile.contains(".jpeg")||newFile.contains(".gif")){
+        	    Bitmap bMap = BitmapFactory.decodeFile(newFile);
+        	    Bitmap bMapScaled = Bitmap.createScaledBitmap(bMap, 400, 300, true);
+                image.setImageBitmap(bMapScaled);
+                Toast.makeText(
+        				this, 
+        				"This picture will be attached to your brodcasts from now on.",
+        				Toast.LENGTH_SHORT).show(); 
+                
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                bMapScaled.compress(Bitmap.CompressFormat.PNG, 90, stream); //compress to which format you want.
+                byte [] byte_arr = stream.toByteArray();
+                String image_str = Base64.encodeBytes(byte_arr);
+                final ArrayList<NameValuePair> nameValuePairs = new  ArrayList<NameValuePair>();
+     
+                nameValuePairs.add(new BasicNameValuePair("image",image_str));
+                
+                new Thread(new Runnable() {         
+                    public void run() {
+                    	Looper.prepare();
+                   
+                try{
+                    HttpClient httpclient = new DefaultHttpClient();
+                    HttpPost httppost = new HttpPost(php_URL);
+                    httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+                    HttpResponse response = httpclient.execute(httppost);
+                    String the_string_response = convertResponseToString(response);
+                    yourPictureLink = php_URL + the_string_response;
+                }catch(Exception e){
+                      Toast.makeText(ChatRoom.this, "ERROR " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                      System.out.println("Error in http connection "+e.toString());
+                }Looper.loop();
+                    }
+                }).start();
+           
+        		}
+        		else{
+        			Toast.makeText(
+            				this, 
+            				"Selected file is not an image",
+            				Toast.LENGTH_SHORT).show(); 
+        		}
+        	} 
+        	else{
+        		image.setImageResource(R.drawable.car_default);
+        	}
+		}
+		super.onActivityResult(requestCode, resultCode, data);
+	}
     
+    public String convertResponseToString(HttpResponse response) throws IllegalStateException, IOException{
+    	 
+        String res = "";
+        StringBuffer buffer = new StringBuffer();
+        inputStream = response.getEntity().getContent();
+        int contentLength = (int) response.getEntity().getContentLength(); //getting content length…..
+        Toast.makeText(ChatRoom.this, "contentLength : " + contentLength, Toast.LENGTH_LONG).show();
+        if (contentLength < 0){
+        }
+        else{
+               byte[] data = new byte[512];
+               int len = 0;
+               try
+               {
+                   while (-1 != (len = inputStream.read(data)) )
+                   {
+                       buffer.append(new String(data, 0, len)); //converting to string and appending  to stringbuffer…..
+                   }
+               }
+               catch (IOException e)
+               {
+                   e.printStackTrace();
+               }
+               try
+               {
+                   inputStream.close(); // closing the stream…..
+               }
+               catch (IOException e)
+               {
+                   e.printStackTrace();
+               }
+               res = buffer.toString();     // converting stringbuffer to string…..
+
+               Toast.makeText(ChatRoom.this, "Result : " + res, Toast.LENGTH_LONG).show();
+               //System.out.println("Response => " +  EntityUtils.toString(response.getEntity()));
+        }
+        return res;
+   }
     
     //Multi-User Chat listener class, necessary for packet(message type in this case) retrieval from the server. Adds messages received to the "messages" array  
     class ConsumerMUCMessageListener implements PacketListener {

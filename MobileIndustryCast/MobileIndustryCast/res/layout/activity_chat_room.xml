@@ -95,7 +95,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ems="10"
-                    android:hint="@string/post_text_hint" />
+                    android:hint="@string/post_text_hint" >
+
+                    <requestFocus />
+                </EditText>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -119,20 +122,21 @@
             </LinearLayout>
 
             <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="30dp"
+                android:layout_width="200dp"
+                android:layout_height="150dp"
+                android:layout_marginBottom="10dp"
+                android:layout_marginLeft="31dp"
+                android:layout_marginTop="10dp"
                 android:background="@drawable/image_background" >
 
                 <ImageView
                     android:id="@+id/imageView1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="4dp"
-                    android:layout_marginTop="2dp"
+                    android:layout_gravity="center"
+                    android:layout_margin="2dp"
                     android:contentDescription="@string/item_photo"
                     android:src="@drawable/car_default" />
-
             </FrameLayout>
 
             <Button
@@ -141,7 +145,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="65dp"
                 android:text="@string/attach_picture_btn" />
-
         </LinearLayout>
 
         <FrameLayout
@@ -162,7 +165,6 @@
                 android:layout_weight="1.79" >
             </ListView>
         </FrameLayout>
-
     </LinearLayout>
 
 </LinearLayout>
