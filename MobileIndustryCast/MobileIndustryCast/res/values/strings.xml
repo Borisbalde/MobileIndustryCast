@@ -34,6 +34,8 @@
     <string name="NEW_MESSAGE">NEW MESSAGE</string>
     <string name="item_photo">Photo of offered item</string>
     <string name="attach_picture_btn">Attach Picture</string>
+    <string name="OK">OK</string>
+    <string name="OK_btn">OK_btn</string>
     
 
 </resources>

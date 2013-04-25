@@ -12,9 +12,10 @@ public class CustomListMessage {
 	private String location;//Location of sender
 	private String status;//"buyer", "seller", "trade", "need_info"
 	private String messageType;//"broadcast","post"
+	private String pictureLink;//"address of the image attached"
 	
 	//basic constructor for class, assumes that type is "post" and  status is "need_info"
-	public CustomListMessage(String user, String msg, String loc)
+	public CustomListMessage(String user, String msg, String loc, String link)
 	{
 		timestamp=addTimestamp();
 		userName=user;
@@ -22,9 +23,10 @@ public class CustomListMessage {
 		location=loc;
 		status="Info";
 		messageType = "post";
+		pictureLink = link;
 	}
 	
-	public CustomListMessage(String user, String msg, String loc, String Status, String type)
+	public CustomListMessage(String user, String msg, String loc, String Status, String type, String link)
 	{
 		timestamp=addTimestamp();
 		userName= user;
@@ -32,6 +34,7 @@ public class CustomListMessage {
 		location=loc;
 		status=Status;
 		messageType = type;
+		pictureLink = link;
 	}
 	
 	public String messageToString()
@@ -104,6 +107,10 @@ public class CustomListMessage {
 		return messageType;
 	}
 	
+	public String getPictureLink()
+	{
+		return pictureLink;
+	}
 	public void setTimestamp(String timeStamp)
 	{
 		timestamp=timeStamp;
@@ -134,6 +141,9 @@ public class CustomListMessage {
 		messageType = type;
 	}
 	
-	
+	public void setPictureLink(String link)
+	{
+		pictureLink = link;
+	}
 
 }

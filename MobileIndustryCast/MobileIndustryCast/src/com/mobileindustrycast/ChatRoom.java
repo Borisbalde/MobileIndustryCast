@@ -4,12 +4,16 @@ package com.mobileindustrycast;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
@@ -23,19 +27,24 @@ import org.jivesoftware.smackx.muc.MultiUserChat;
 import com.mobileindustrycast.R;
 import com.mobileindustrycast.XMPP_setting;
 
-
 import android.text.TextWatcher;
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.http.AndroidHttpClient;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.view.Menu;
 import android.view.View;
+import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -68,24 +77,49 @@ public class ChatRoom extends Activity implements BroadcastDialog.NoticeDialogLi
 	InputStream inputStream;
 	
 	final String php_URL = "http://localhost/test/test.php";
-  String yourPictureLink = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz";//to due to the final type specifics name is such that is hard to reproduce 
+    String yourPictureLink = "http://cs410727.vk.me/v410727315/75c9/kv80Ec8oCww.jpg";//should have "User did not attach picture to the message" 
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat_room);  
-       	
+    
+        final Dialog imageDialog = new Dialog(this);
+        imageDialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        imageDialog.setContentView(getLayoutInflater().inflate(R.layout.image_layout
+                , null));
+        imageDialog.setCanceledOnTouchOutside(true);
+ 
+			
         adapter = new ExtendedArrayAdapter(this, msg);
         mlist =(ListView) findViewById(R.id.messagesListView);
     	mlist.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
     	//mlist.setStackFromBottom(true);
-    	mlist.setAdapter(adapter);
-		//adapter.notifyDataSetChanged();
+    	mlist.setAdapter(adapter);   	
+    	
+    	OnItemClickListener listListener = new OnItemClickListener()
+    	{
+    		public void onItemClick(AdapterView<?> arg0, View v, int position, long id)
+    		{   	  	//you are able to see only sellers or traders goods and only if they broadcast it(i.e. no pictures displayed for "post" type messages	
+    			if (adapter.get(position).getMessageType().equals("broadcast") && (adapter.get(position).getStatus().equals("Trade")||
+    					adapter.get(position).getStatus().equals("Seller"))){
+    			ImageView image = (ImageView) imageDialog.findViewById(R.id.pictureHolder);
+    			download(adapter.get(position).getPictureLink(), image);
+    			imageDialog.show();
+        		int r = position;}
+    		}
 
-		
+    	};
+    	
+    	
+    	mlist.setOnItemClickListener(listListener);
+    	
+		//adapter.notifyDataSetChanged();
+    		
         Button post_button = (Button) findViewById(R.id.post_btn);
         Button broadcast_button = (Button) findViewById(R.id.broadcast_btn);
         Button attach_button = (Button) findViewById(R.id.button1);
+        
         
         final ToggleButton buyer = (ToggleButton) findViewById(R.id.toggle_buyer);
         final ToggleButton seller = (ToggleButton) findViewById(R.id.toggle_seller);
@@ -173,13 +207,12 @@ public class ChatRoom extends Activity implements BroadcastDialog.NoticeDialogLi
 		}).start();
 		
       
-
 		//Post button event. Sends message with user defined body to the Openfire Server
 		post_button.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 
 				String body = ((EditText) findViewById(R.id.post_text)).getText().toString();//getting message body from user input
-				CustomListMessage message = new CustomListMessage(USERNAME, body, userLocation);
+				CustomListMessage message = new CustomListMessage(USERNAME, body, userLocation, yourPictureLink);
 			
 
 				//if text fiend is not empty sends the message to the server in for of extended message(timestamp and username are included in the message body)
@@ -286,7 +319,8 @@ public class ChatRoom extends Activity implements BroadcastDialog.NoticeDialogLi
     			+"#message "+msg.getBody()+" message#"
     			+"#location "+msg.getLocation()+" location#"
     			+"#status "+msg.getStatus()+" status#"
-    			+"#messageType "+msg.getMessageType()+" messageType#";
+    			+"#messageType "+msg.getMessageType()+" messageType#"
+    			+"#pictureLink "+msg.getPictureLink()+" pictureLink#";
     	return message;
     }
     
@@ -296,7 +330,8 @@ public class ChatRoom extends Activity implements BroadcastDialog.NoticeDialogLi
     			message.substring(message.indexOf("#message ")+"#message ".length(),message.indexOf(" message#")),
     			message.substring(message.indexOf("#location ")+"#location ".length(),message.indexOf(" location#")),
     			message.substring(message.indexOf("#status ")+"#status ".length(),message.indexOf(" status#")),
-    			message.substring(message.indexOf("#messageType ")+"#messageType ".length(),message.indexOf(" messageType#")));
+    			message.substring(message.indexOf("#messageType ")+"#messageType ".length(),message.indexOf(" messageType#")),
+    			message.substring(message.indexOf("#pictureLink ")+"#pictureLink ".length(),message.indexOf(" pictureLink#")));
     	
     	msg.setTimestamp(message.substring(message.indexOf("#timestamp ")+"#timestamp ".length(),message.indexOf(" timestamp#")));
     	return msg;
@@ -334,7 +369,7 @@ public class ChatRoom extends Activity implements BroadcastDialog.NoticeDialogLi
     public void sendBroadcastMessage()
     {
     	String body = ((EditText) findViewById(R.id.post_text)).getText().toString();//getting message body from user input
-		CustomListMessage message = new CustomListMessage(USERNAME, body, userLocation, userStatus, "broadcast");
+		CustomListMessage message = new CustomListMessage(USERNAME, body, userLocation, userStatus, "broadcast",yourPictureLink);
 	
 
 		//if text fiend is not empty sends the message to the server in for of extended message(timestamp and uresname are included in the message body)
@@ -447,10 +482,88 @@ public class ChatRoom extends Activity implements BroadcastDialog.NoticeDialogLi
                res = buffer.toString();     // converting stringbuffer to string…..
 
                Toast.makeText(ChatRoom.this, "Result : " + res, Toast.LENGTH_LONG).show();
-               //System.out.println("Response => " +  EntityUtils.toString(response.getEntity()));
+               if(res.contains(".png")||res.contains(".jpg")||
+       				res.contains(".jpeg")||res.contains(".gif")){
+               yourPictureLink = res;
+               }
         }
         return res;
    }
+    
+    static Bitmap downloadBitmap(String url) {
+        final AndroidHttpClient client = AndroidHttpClient.newInstance("Android");
+        final HttpGet getRequest = new HttpGet(url);
+
+        try {
+            HttpResponse response = client.execute(getRequest);
+            final int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpStatus.SC_OK) { 
+                System.out.println("ImageDownloader Error " + statusCode + " while retrieving bitmap from " + url); 
+                return null;
+            }
+            
+            final HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                InputStream inputStream = null;
+                try {
+                    inputStream = entity.getContent(); 
+                    final Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                    return bitmap;
+                } finally {
+                    if (inputStream != null) {
+                        inputStream.close();  
+                    }
+                    entity.consumeContent();
+                }
+            }
+        } catch (Exception e) {
+            // Could provide a more explicit error message for IOException or IllegalStateException
+            getRequest.abort();
+            System.out.println("ImageDownloader Error while retrieving bitmap from " + url+ ", "+ e.toString());
+        } finally {
+            if (client != null) {
+                client.close();
+            }
+        }
+        return null;
+    }
+    
+    public void download(String url, ImageView imageView) {
+        BitmapDownloaderTask task = new BitmapDownloaderTask(imageView);
+        task.execute(url);
+    }
+    
+    class BitmapDownloaderTask extends AsyncTask<String, Void, Bitmap> {
+        private String url;
+        private final WeakReference<ImageView> imageViewReference;
+
+        public BitmapDownloaderTask(ImageView imageView) {
+            imageViewReference = new WeakReference<ImageView>(imageView);
+        }
+
+        @Override
+        // Actual download method, run in the task thread
+        protected Bitmap doInBackground(String... params) {
+             // params comes from the execute() call: params[0] is the url.
+             return downloadBitmap(params[0]);
+        }
+
+        @Override
+        // Once the image is downloaded, associates it to the imageView
+        protected void onPostExecute(Bitmap bitmap) {
+            if (isCancelled()) {
+                bitmap = null;
+            }
+
+            if (imageViewReference != null) {
+                ImageView imageView = imageViewReference.get();
+                if (imageView != null) {
+                	Bitmap bMapScaled = Bitmap.createScaledBitmap(bitmap, 400, 300, true);
+                    imageView.setImageBitmap(bMapScaled);
+                }
+            }
+        }
+    }
     
     //Multi-User Chat listener class, necessary for packet(message type in this case) retrieval from the server. Adds messages received to the "messages" array  
     class ConsumerMUCMessageListener implements PacketListener {

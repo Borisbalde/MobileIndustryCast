@@ -7,7 +7,9 @@ import android.content.Context;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.ImageView;
@@ -48,6 +50,7 @@ public class ExtendedArrayAdapter extends ArrayAdapter<CustomListMessage> {
 	if (convertView == null){
 	LayoutInflater inflater = (LayoutInflater) context .getSystemService(Context.LAYOUT_INFLATER_SERVICE);  
     v = inflater.inflate(R.layout.rowlayout, parent, false);
+    
     ViewHolder viewHolder = new ViewHolder();
     viewHolder.text = (TextView) v.findViewById(R.id.label);
     viewHolder.image = (ImageView) v
@@ -111,6 +114,11 @@ public class ExtendedArrayAdapter extends ArrayAdapter<CustomListMessage> {
 	          }
 	          return mFilter;
 	      }
+ 
+  public CustomListMessage get (int position)
+ {
+	 return messageList.get(position);
+ }
  
   private class ArrayFilter extends Filter {
 	          @Override
