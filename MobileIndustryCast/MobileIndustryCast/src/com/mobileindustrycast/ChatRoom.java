@@ -387,7 +387,8 @@ public class ChatRoom extends Activity implements BroadcastDialog.NoticeDialogLi
 
 	protected void onDestroy()
 	{
-		xmpp.disconnect();
+		super.onDestroy();
+		xmpp.disconnect();		
 	}
 
 	//After browsing activity is done sets Picture chosen into main UI picture holder, sends picture to the php service to be stored online
